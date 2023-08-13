@@ -1,32 +1,44 @@
 <template>
   <div class="flex flex-col">
-
     <div
       v-if="step === 'base' && !hasURLHash"
       class="px-2 md:px-0 text-center flex-grow grid md:grid-cols-2 lg:grid-cols-3 md:space-x-3 lg:space-x-6"
     >
-      <div class="leading-none text-theme-lighter flex flex-col justify-center lg:-mt-12 lg:col-start-2">
+      <div
+        class="leading-none text-theme-lighter flex flex-col justify-center lg:-mt-12 lg:col-start-2"
+      >
         <p class="text-lg md:text-xl text-left">Start by</p>
-        <p class="text-3xl md:text-4xl font-bold mt-1 text-left">selecting a <u>base</u> color</p>
+        <p class="text-3xl md:text-4xl font-bold mt-1 text-left">
+          selecting a <u>base</u> color
+        </p>
         <input
           type="text"
           v-model="hex"
-          v-maska="{ mask: '!#HHHHHH', tokens: { 'H': { pattern: /[0-9a-fA-F]/, uppercase: true }}}"
+          v-maska="{
+            mask: '!#HHHHHH',
+            tokens: { H: { pattern: /[0-9a-fA-F]/, uppercase: true } },
+          }"
           class="form-control form-no-outline font-black text-2xl mt-6 py-6 px-8"
-        >
+        />
         <div class="mt-8">
           <p class="text-left">Default tailwindcss palette colors (*-500)</p>
           <div class="flex justify-between h-12 mt-2">
             <div
               class="flex-grow cursor-pointer"
-              :class="{ 'border-2 light:border-black': hex === color}"
+              :class="{ 'border-2 light:border-black': hex === color }"
               :style="`background-color: ${color};`"
               v-for="color in defaultTailwindPaletteBaseColors"
               :key="'tailwind-default-base-' + color"
-              @click="hex = color, focus = 'suggestion'"
+              @click=";(hex = color), (focus = 'suggestion')"
             ></div>
           </div>
         </div>
+        <BaseStopSelect
+          class="mt-8"
+          v-show="validHex"
+          :base-shade-stop="baseShadeStop"
+          @set="baseShadeStop = $event"
+        />
         <transition name="fade">
           <div
             class="btn mt-8 py-4 px-8"
@@ -49,56 +61,62 @@
       </div>
     </div>
 
-    <div
-      class="flex flex-col"
-      v-if="step === 'shades' || hasURLHash"
-    >
+    <div class="flex flex-col" v-if="step === 'shades' || hasURLHash">
       <div class="flex justify-between bg-theme-lighter border-t border-theme">
         <button
           class="text-theme text-sm hover:text-blue-400 focus:outline-none p-2"
           @click="backToBaseSelection"
-          title="Back to base selection"
         >
           <i class="fas fa-angle-left"></i>
-          back to base color selection.
+          base color selection
         </button>
 
         <div class="flex items-center">
           <div
-            v-if="isLoggedIn && loginFeatures && (shadeHasUnsavedChanges || shade.id)"
+            v-if="
+              isLoggedIn &&
+              loginFeatures &&
+              (shadeHasUnsavedChanges || shade.id)
+            "
             class="text-theme font-bold text-sm bg-theme-500 h-full flex items-center"
           >
-            <p
-              v-if="shade.id"
-              class="px-4"
-            >my shade #{{ shade.id }}</p>
+            <p v-if="shade.id" class="px-4">my shade #{{ shade.id }}</p>
+
+            <button
+              v-if="oldVersionMessages.length"
+              class="text-theme text-sm bg-red-500 text-red-800 hover:text-red-900 focus:outline-none p-2"
+              title="Clone"
+              @click="dbInsertShade(version)"
+              v-tooltip="{
+                content: `<strong>Click to clone to a new version.</strong><br>Changes:<br>${oldVersionDisplayMessage}`,
+                html: true,
+              }"
+            >
+              <i class="fas fa-info-circle mr-1"></i>
+              Old version
+            </button>
 
             <div
               class="text-sm focus:outline-none flex items-center justify-between bg-theme-600 h-full pl-4 select-none"
               :class="[
-              shadeHasUnsavedChanges ? 'text-theme hover:text-theme' : 'text-theme-500',
-              { 'pr-4' : !shade.id },
+                shadeHasUnsavedChanges
+                  ? 'text-theme hover:text-theme'
+                  : 'text-theme-500',
+                { 'pr-4': !shade.id },
               ]"
             >
-              <div
-                class="mr-2 cursor-pointer"
-                @click="saveShade"
-              >
-                <span
-                  class="text-sm"
-                  v-if="shadeHasUnsavedChanges"
-                >*</span>
-                <!-- <i class="fas fa-save mr-1"></i> -->
+              <div class="mr-2 cursor-pointer" @click="saveShade">
+                <span class="text-sm" v-if="shadeHasUnsavedChanges">*</span>
                 save
               </div>
-              <DropdownComponent
+              <CustomDropdown
                 class="h-full"
                 placement="right"
                 :disabled="!shadeHasUnsavedChanges"
                 v-if="shade.id"
               >
-                <div
-                  slot="button"
+                <template
+                  v-slot:button
                   class="flex h-full items-center bg-theme-600 text-theme px-1"
                 >
                   <svg
@@ -107,21 +125,22 @@
                     viewBox="0 0 20 20"
                     :fill="shadeHasUnsavedChanges ? '#FFFFFF' : '#262626'"
                   >
-                    <path d="M4.516 7.548c.436-.446 1.043-.481 1.576 0L10 11.295l3.908-3.747c.533-.481 1.141-.446 1.574 0 .436.445.408 1.197 0 1.615-.406.418-4.695 4.502-4.695 4.502a1.095 1.095 0 0 1-1.576 0S4.924 9.581 4.516 9.163c-.409-.418-.436-1.17 0-1.615z" />
+                    <path
+                      d="M4.516 7.548c.436-.446 1.043-.481 1.576 0L10 11.295l3.908-3.747c.533-.481 1.141-.446 1.574 0 .436.445.408 1.197 0 1.615-.406.418-4.695 4.502-4.695 4.502a1.095 1.095 0 0 1-1.576 0S4.924 9.581 4.516 9.163c-.409-.418-.436-1.17 0-1.615z"
+                    />
                   </svg>
-                </div>
+                </template>
 
-                <div slot="content">
+                <template v-slot:content>
                   <div
                     class="block px-2 my-1 cursor-pointer rounded hover:bg-purple-500 hover:text-white"
                     @click="dbInsertShade"
                   >
                     Save as new
                   </div>
-                </div>
-              </DropdownComponent>
+                </template>
+              </CustomDropdown>
             </div>
-
           </div>
 
           <button
@@ -132,47 +151,118 @@
             <i class="fas fa-share"></i>
             share
           </button>
+
+          <div
+            class="flex justify-between px-2 text-xs py-1"
+            v-if="loginFeatures && originShade.id"
+          >
+            <VDropdown :triggers="['hover']">
+              <div
+                @click.stop="toggleLikeShade(originShade)"
+                class="flex items-center hover:text-purple-500 cursor-pointer"
+              >
+                <svg
+                  v-if="
+                    myLikedShades &&
+                    myLikedShades.find(l => l.shade_id === originShade.id)
+                  "
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-purple-500"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                <svg
+                  v-else
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-theme"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  />
+                </svg>
+              </div>
+
+              <template #popper>
+                <span
+                  v-if="
+                    myLikedShades &&
+                    myLikedShades.find(l => l.shade_id === originShade.id)
+                  "
+                >
+                  Unlike shade
+                </span>
+                <span v-else> Like shade </span>
+              </template>
+            </VDropdown>
+          </div>
         </div>
       </div>
 
-      <shades-component
+      <ShadeInterface
         :initialHEX="hex"
         :dbShade="shade"
-        :colors.sync="colors"
-        ref="shadesComponent"
+        :colors="colors"
+        :version="version"
+        @update:colors="colors = $event"
+        :baseShadeStop="baseShadeStop"
+        @set-base-shade-stop="baseShadeStop = $event"
+        @hash-changed="handleHashChange"
+        @update:oldVersionMessages="$event => (oldVersionMessages = $event)"
+        ref="shadeInterface"
       />
     </div>
-
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
-import ShadesComponent from '@/components/Shades'
-import CarbonAds from '@/components/CarbonAds'
+import ShadeInterface from '@/components/ShadeInterface.vue'
+import CarbonAds from '@/components/CarbonAds.vue'
 import converter from 'color-convert'
-import DropdownComponent from '@/components/Dropdown'
-import CommunityQuickSelect from '@/components/CommunityQuickSelect'
+import CustomDropdown from '@/components/CustomDropdown.vue'
+import CommunityQuickSelect from '@/components/CommunityQuickSelect.vue'
+import BaseStopSelect from '@/components/BaseStopSelect.vue'
+import community from '@/composables/community.js'
+import * as timeago from 'timeago.js'
+import { vMaska } from 'maska'
+import { pageview } from 'vue-gtag'
 
 export default {
   components: {
-    ShadesComponent,
+    ShadeInterface,
     CarbonAds,
-    DropdownComponent,
+    CustomDropdown,
     CommunityQuickSelect,
+    BaseStopSelect,
   },
-  metaInfo: {
-    title: 'Tailwind Shades',
-    meta: [
-      {
-        name: 'description',
-        content: 'A tool to help generate color shades for Tailwind CSS.',
-      },
-    ],
+  directives: { maska: vMaska },
+  head() {
+    return {
+      title: 'Tailwind Shades',
+      meta: [
+        {
+          name: 'description',
+          content: 'A tool to help generate color shades for Tailwind CSS.',
+        },
+      ],
+    }
   },
+  mixins: [community],
   data() {
     return {
-      isProduction: process.env.NODE_ENV === 'production',
+      isProduction: import.meta.env.PROD,
       step: 'base',
       // shade used for cloud storage.
       shade: this.emptyShade(),
@@ -188,11 +278,24 @@ export default {
         '#8B5CF6',
         '#EC4899',
       ],
-      hasURLHash: window.location.hash.length > 2,
       shadeHasUnsavedChanges: false,
+      baseShadeStop: 5,
+      version: 1,
+      oldVersionMessages: [],
     }
   },
   computed: {
+    hasURLHash() {
+      return window.location.hash.length > 2
+    },
+    oldVersionDisplayMessage() {
+      const maxLen = 10
+      let msg = this.oldVersionMessages.slice(0, maxLen)
+      if (this.oldVersionMessages.length > maxLen) {
+        msg.push('...')
+      }
+      return msg.join('<br>')
+    },
     shadeIsUnsaved() {
       return !this.shade.id || this.shadeHasUnsavedChanges
     },
@@ -203,26 +306,39 @@ export default {
       }
       return /^#[0-9A-F]{6}$/i.test(hex)
     },
-    ...mapGetters(['theme', 'user', 'isLoggedIn', 'loginFeatures']),
+    ...mapGetters([
+      'theme',
+      'user',
+      'isLoggedIn',
+      'loginFeatures',
+      'originShade',
+    ]),
   },
   mounted() {
-    if (process.env.NODE_ENV === 'production') {
-      this.$ga.page('/')
+    if (import.meta.env.PROD) {
+      pageview('/')
     }
 
-    const shade = this.$route.params.shade
-    if (shade) {
-      this.shade = shade
-      this.hex = shade.colors[5]
+    if (this.originShade.id) {
+      this.shade = this.originShade
+      this.hex = this.originShade.colors[this.baseShadeStop]
       this.step = 'shades'
+      this.$store.commit('setOriginShade', {})
+    }
+
+    if (!this.myLikedShades.length) {
+      this.getMyLikedShades()
     }
 
     window.addEventListener('hashchange', this.handleHashChange)
   },
-  beforeDestroy() {
+  beforeUnmount() {
     window.removeEventListener('hashchange', this.handleHashChange)
   },
   methods: {
+    formatCreatedAt(date) {
+      return timeago.format(date)
+    },
     saveShade() {
       if (!this.shadeHasUnsavedChanges) {
         return
@@ -245,6 +361,7 @@ export default {
         .match({
           id: this.shade.id,
         })
+        .select()
       if (error) {
         this.$notify({
           text: "Couldn't update shade",
@@ -255,7 +372,8 @@ export default {
       }
 
       this.shade = Object.assign({}, this.shade, data[0])
-      this.shadeHasUnsavedChanges = this.shade.code !== window.location.hash.substring(1)
+      this.shadeHasUnsavedChanges =
+        this.shade.code !== window.location.hash.substring(1)
       this.$notify({
         text: 'Shade updated successfully',
         type: 'info',
@@ -263,12 +381,19 @@ export default {
       })
       this.$store.commit('setCacheValue', { key: 'shades.mine', value: null })
     },
-    async dbInsertShade() {
-      const { data, error } = await this.$supabase.from('shades').insert({
-        user_id: this.user.id,
-        code: window.location.hash.substring(1),
-        colors: this.colors,
-      })
+    async dbInsertShade(changeVersion) {
+      let code = window.location.hash.substring(1)
+      if (changeVersion) {
+        code = this.$refs.shadeInterface.urlHash({ version: changeVersion })
+      }
+      const { data, error } = await this.$supabase
+        .from('shades')
+        .insert({
+          user_id: this.user.id,
+          code,
+          colors: this.colors,
+        })
+        .select()
       if (error) {
         this.$notify({
           text: "Couldn't save shade",
@@ -279,7 +404,9 @@ export default {
       }
 
       this.shade = Object.assign({}, this.shade, data[0])
-      this.shadeHasUnsavedChanges = this.shade.code !== window.location.hash.substring(1)
+      this.shadeHasUnsavedChanges =
+        this.shade.code !== window.location.hash.substring(1)
+      this.$store.commit('setOriginShade', this.shade)
 
       this.$notify({
         text: 'Shade saved successfully',
@@ -287,6 +414,9 @@ export default {
         duration: 2000,
       })
       this.$store.commit('setCacheValue', { key: 'shades.mine', value: null })
+      if (changeVersion) {
+        this.$refs.shadeInterface.resetVersionChanges()
+      }
     },
     handleHashChange() {
       this.hasURLHash = window.location.hash.length > 2
@@ -297,7 +427,10 @@ export default {
       // Force reload in case the URL hash changes manually.
       let h = window.location.hash.substring(1)
       this.shadeHasUnsavedChanges = this.shade.code !== h
-      if (this.$refs.shadesComponent && h !== this.$refs.shadesComponent.urlHash()) {
+      if (
+        this.$refs.shadeInterface &&
+        h !== this.$refs.shadeInterface.urlHash()
+      ) {
         window.location.reload()
       }
     },
@@ -328,11 +461,17 @@ export default {
       window.getSelection().removeAllRanges()
     },
     backToBaseSelection() {
+      this.$store.commit('setOriginShade', {})
       window.location.hash = ''
-      history.pushState('', document.title, window.location.pathname + window.location.search)
+      window.history.replaceState(
+        null,
+        '',
+        window.location.pathname + window.location.search
+      )
       this.shade = this.emptyShade()
       this.hex = ''
       this.step = 'base'
+      this.$refs.shadeInterface.resetVersionChanges()
     },
     emptyShade() {
       return {

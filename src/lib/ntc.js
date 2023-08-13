@@ -31,7 +31,7 @@ Sample Usage:
 */
 
 export const ntc = {
-  init: function() {
+  init: function () {
     var color, rgb, hsl
     for (var i = 0; i < ntc.names.length; i++) {
       color = '#' + ntc.names[i][0]
@@ -41,11 +41,20 @@ export const ntc = {
     }
   },
 
-  name: function(color) {
+  name: function (color) {
     color = color.toUpperCase()
-    if (color.length < 3 || color.length > 7) return ['#000000', 'Invalid Color: ' + color, false]
+    if (color.length < 3 || color.length > 7)
+      return ['#000000', 'Invalid Color: ' + color, false]
     if (color.length % 3 == 0) color = '#' + color
-    if (color.length == 4) color = '#' + color.substr(1, 1) + color.substr(1, 1) + color.substr(2, 1) + color.substr(2, 1) + color.substr(3, 1) + color.substr(3, 1)
+    if (color.length == 4)
+      color =
+        '#' +
+        color.substr(1, 1) +
+        color.substr(1, 1) +
+        color.substr(2, 1) +
+        color.substr(2, 1) +
+        color.substr(3, 1) +
+        color.substr(3, 1)
 
     var rgb = ntc.rgb(color)
     var r = rgb[0]
@@ -62,10 +71,17 @@ export const ntc = {
     var df = -1
 
     for (var i = 0; i < ntc.names.length; i++) {
-      if (color == '#' + ntc.names[i][0]) return ['#' + ntc.names[i][0], ntc.names[i][1], true]
+      if (color == '#' + ntc.names[i][0])
+        return ['#' + ntc.names[i][0], ntc.names[i][1], true]
 
-      ndf1 = Math.pow(r - ntc.names[i][2], 2) + Math.pow(g - ntc.names[i][3], 2) + Math.pow(b - ntc.names[i][4], 2)
-      ndf2 = Math.pow(h - ntc.names[i][5], 2) + Math.pow(s - ntc.names[i][6], 2) + Math.pow(l - ntc.names[i][7], 2)
+      ndf1 =
+        Math.pow(r - ntc.names[i][2], 2) +
+        Math.pow(g - ntc.names[i][3], 2) +
+        Math.pow(b - ntc.names[i][4], 2)
+      ndf2 =
+        Math.pow(h - ntc.names[i][5], 2) +
+        Math.pow(s - ntc.names[i][6], 2) +
+        Math.pow(l - ntc.names[i][7], 2)
       ndf = ndf1 + ndf2 * 2
       if (df < 0 || df > ndf) {
         df = ndf
@@ -73,13 +89,19 @@ export const ntc = {
       }
     }
 
-    return cl < 0 ? ['#000000', 'Invalid Color: ' + color, false] : ['#' + ntc.names[cl][0], ntc.names[cl][1], false]
+    return cl < 0
+      ? ['#000000', 'Invalid Color: ' + color, false]
+      : ['#' + ntc.names[cl][0], ntc.names[cl][1], false]
   },
 
   // adopted from: Farbtastic 1.2
   // http://acko.net/dev/farbtastic
-  hsl: function(color) {
-    var rgb = [parseInt('0x' + color.substring(1, 3)) / 255, parseInt('0x' + color.substring(3, 5)) / 255, parseInt('0x' + color.substring(5, 7)) / 255]
+  hsl: function (color) {
+    var rgb = [
+      parseInt('0x' + color.substring(1, 3)) / 255,
+      parseInt('0x' + color.substring(3, 5)) / 255,
+      parseInt('0x' + color.substring(5, 7)) / 255,
+    ]
     var min, max, delta, h, s, l
     var r = rgb[0],
       g = rgb[1],
@@ -105,8 +127,12 @@ export const ntc = {
 
   // adopted from: Farbtastic 1.2
   // http://acko.net/dev/farbtastic
-  rgb: function(color) {
-    return [parseInt('0x' + color.substring(1, 3)), parseInt('0x' + color.substring(3, 5)), parseInt('0x' + color.substring(5, 7))]
+  rgb: function (color) {
+    return [
+      parseInt('0x' + color.substring(1, 3)),
+      parseInt('0x' + color.substring(3, 5)),
+      parseInt('0x' + color.substring(5, 7)),
+    ]
   },
 
   names: [

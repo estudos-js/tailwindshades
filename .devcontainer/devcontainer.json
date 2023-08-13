@@ -1,0 +1,32 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.231.6/containers/javascript-node
+{
+  "name": "Node.js",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "VARIANT": "16"
+    }
+  },
+  "runArgs": [
+    "--name",
+    "devcontainer_tailwindshades"
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "EditorConfig.EditorConfig",
+        "streetsidesoftware.code-spell-checker",
+        "esbenp.prettier-vscode",
+        "Vue.volar",
+        "bradlc.vscode-tailwindcss",
+        "Zignd.html-css-class-completion",
+        "tombonnike.vscode-status-bar-format-toggle",
+        "eamodio.gitlens"
+      ]
+    }
+  },
+  "postCreateCommand": "npm install",
+  "remoteUser": "node"
+}

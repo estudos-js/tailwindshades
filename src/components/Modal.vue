@@ -1,12 +1,11 @@
 <template>
   <div
     class="fixed top-0 left-0 w-screen h-screen flex justify-center items-center py-8 z-50 overflow-y-auto"
-    v-show="!!value"
+    v-show="!!modelValue"
   >
-
     <div
       class="fixed top-0 left-0 w-full h-full bg-theme-900 z-0 opacity-90"
-      @click.stop="$emit('input', !value)"
+      @click.stop="$emit('update:modelValue', !modelValue)"
     ></div>
 
     <div
@@ -24,9 +23,8 @@
       >
         <slot name="title"></slot>
       </div>
-      <slot v-if="!!value"></slot>
+      <slot v-if="!!modelValue"></slot>
     </div>
-
   </div>
 </template>
 
@@ -34,7 +32,7 @@
 export default {
   name: 'modal-component',
   props: {
-    value: {},
+    modelValue: {},
     size: {
       type: String,
       default: 'full',
@@ -44,15 +42,15 @@ export default {
     return {}
   },
   watch: {
-    value() {
-      if (this.value) {
+    modelValue() {
+      if (this.modelValue) {
         document.body.style.overflow = 'hidden'
       } else {
         document.body.style.overflow = 'visible'
       }
     },
   },
-  beforeDestroy() {
+  beforeUnmount() {
     document.body.style.overflow = 'visible'
   },
 }

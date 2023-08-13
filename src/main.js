@@ -1,30 +1,44 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
+import { createStore } from './store'
+import { createRouter } from './router'
 import App from './App.vue'
-import router from '@/router/index'
-import store from '@/store/index'
-import VueMeta from 'vue-meta'
-import VueAnalytics from 'vue-analytics'
 import '@/assets/main.css'
 import '@fortawesome/fontawesome-free/css/all.min.css'
-import Notifications from 'vue-notification'
-import Maska from 'maska'
-import 'prismjs'
-import '@/assets/css/prism-vsc-dark-plus.css'
+import VueGtag from 'vue-gtag'
+import Notifications from '@kyvg/vue3-notification'
+import FloatingVue from 'floating-vue'
+import 'floating-vue/dist/style.css'
+import VueHighlightJS from 'vue3-highlightjs'
+// import 'highlight.js/styles/atom-one-dark.css'
 import { createClient } from '@supabase/supabase-js'
+import { createHead, VueHeadMixin } from '@unhead/vue'
 
-Vue.use(VueMeta)
-Vue.use(VueAnalytics, {
-  id: 'UA-145441695-1',
+const router = createRouter()
+const store = createStore(router)
+
+const app = createApp(App)
+
+app.use(store)
+app.use(router)
+app.use(FloatingVue, {
+  container: '#root',
 })
-Vue.use(Maska)
-Vue.use(Notifications)
-Vue.config.productionTip = false
+app.use(Notifications)
+
+const head = createHead()
+app.mixin(VueHeadMixin)
+app.use(head)
+app.use(VueHighlightJS)
+
+app.use(VueGtag, {
+  config: { id: 'G-RKC3YFFTTL' },
+})
 
 const supabase = createClient(
   'https://tsmcdgolhhtzzotghypz.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MTQ2MDU1MiwiZXhwIjoxOTU3MDM2NTUyfQ.wKYvxV79TzOi82vwodfZjJqf2IRR7hYhxaWyj8cA-lk'
 )
-Vue.prototype.$supabase = supabase
+app.config.globalProperties.$supabase = supabase
 
 supabase.auth.onAuthStateChange((event, session) => {
   const user = session?.user
@@ -39,7 +53,10 @@ if (theme === 'light') {
 }
 
 router.beforeEach((to, from, next) => {
-  if (to.matched.some(record => record.meta.auth) && !store.getters.isLoggedIn) {
+  if (
+    to.matched.some(record => record.meta.auth) &&
+    !store.getters.isLoggedIn
+  ) {
     // alert('You need to be logged in to access this page')
     next('/')
   } else {
@@ -47,8 +64,4 @@ router.beforeEach((to, from, next) => {
   }
 })
 
-new Vue({
-  router,
-  store,
-  render: h => h(App),
-}).$mount('#app')
+app.mount('#app')

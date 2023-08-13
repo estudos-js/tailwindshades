@@ -1,24 +1,16 @@
 <template>
   <div class="text-theme">
     <div class="text-center font-bold text-2xl">
-      <div
-        class="py-8"
-        v-if="loading"
-      >Loading...</div>
-      <div
-        class="py-8"
-        v-else-if="!this.shades.length"
-      >
+      <div class="py-8" v-if="loading">Loading...</div>
+      <div class="py-8" v-else-if="!this.shades.length">
         <p>No saved colors</p>
-        <router-link
-          to="/"
-          class="text-sm text-blue-600 hover:text-blue-700"
-        >Go back to add one!</router-link>
+        <router-link to="/" class="text-sm text-blue-600 hover:text-blue-700"
+          >Go back to add one!</router-link
+        >
       </div>
     </div>
     <div class="px-2 flex flex-col items-center w-full">
       <div class="flex py-4 -mx-2 w-full">
-
         <!-- <div class="mx-2">
           <p class="text-lg text-center font-bold">My collections</p>
         </div> -->
@@ -52,7 +44,8 @@
                     <div
                       class="-mt-2 flex justify-center"
                       v-if="colorIndex === 5"
-                    ><svg
+                    >
+                      <svg
                         xmlns="http://www.w3.org/2000/svg"
                         class="h-2 w-2"
                         fill="none"
@@ -71,16 +64,12 @@
                 </div>
               </div>
               <div class="flex justify-between px-2 text-xs py-1">
-                <div
-                  class="flex"
-                  v-if="publishActive"
-                >
-                  <div
-                    v-if="shade.is_public"
-                    class="mr-4"
-                  >
+                <div class="flex" v-if="publishActive">
+                  <div v-if="shade.is_public" class="mr-4">
                     <i class="fas fa-heart"></i>
-                    {{ `${shade.likes} ${(shade.likes > 1 ? 'Likes' : 'Like')}` }}
+                    {{
+                      `${shade.likes} ${shade.likes === 1 ? 'Like' : 'Likes'}`
+                    }}
                   </div>
                   <div
                     v-if="shade.is_public"
@@ -103,7 +92,9 @@
                   <p
                     class="text-xs text-red-600"
                     v-if="confirmDeleteShade === shade.id"
-                  >Click again to confirm</p>
+                  >
+                    Click again to confirm
+                  </p>
                   <p
                     class="cursor-pointer select-none delete-handle"
                     @click="deleteShade(shade)"
@@ -116,7 +107,6 @@
             </div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -144,7 +134,7 @@ export default {
 
     document.addEventListener('click', this.resetConfirm)
   },
-  beforeDestroy() {
+  beforeUnmount() {
     document.removeEventListener('click', this.resetConfirm)
   },
   methods: {
@@ -153,10 +143,7 @@ export default {
       const date = new Date(rawDate)
 
       return (
-        date
-          .getDate()
-          .toString()
-          .padStart(2, '0') +
+        date.getDate().toString().padStart(2, '0') +
         '/' +
         (date.getMonth() + 1).toString().padStart(2, '0') +
         '/' +
@@ -201,9 +188,9 @@ export default {
       this.shades = cache
     },
     editShade(shade) {
+      this.$store.commit('setOriginShade', shade)
       this.$router.push({
         name: 'shade',
-        params: { shade },
       })
     },
     async setIsPublic(shade, value) {

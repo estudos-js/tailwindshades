@@ -19,9 +19,9 @@
     <transition
       enter-active-class="transition-all duration-200 ease-out"
       leave-active-class="transition-all duration-750 ease-in"
-      enter-class="opacity-0 scale-75"
+      enter-from-class="opacity-0 scale-75"
       enter-to-class="opacity-100 scale-100"
-      leave-class="opacity-100 scale-100"
+      leave-from-class="opacity-100 scale-100"
       leave-to-class="opacity-0 scale-75"
     >
       <div
@@ -52,19 +52,17 @@ export default {
     }
   },
   mounted() {
-    const onEscape = e => {
+    document.addEventListener('keydown', this.onEscape)
+  },
+  beforeUnmount() {
+    document.removeEventListener('keydown', this.onEscape)
+  },
+  methods: {
+    onEscape(e) {
       if (e.key === 'Esc' || e.key === 'Escape') {
         this.open = false
       }
-    }
-
-    document.addEventListener('keydown', onEscape)
-
-    this.$once('hook:beforeDestroy', () => {
-      document.removeEventListener('keydown', onEscape)
-    })
-  },
-  methods: {
+    },
     set(value) {
       if (this.disabled) {
         return
